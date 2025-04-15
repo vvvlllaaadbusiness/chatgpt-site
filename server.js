@@ -12,10 +12,24 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+let botEnabled = true;
+
 app.use(express.static('public'));
 app.use(express.json());
 
+// 🟢 Админ-панель
+app.post('/admin/toggle', (req, res) => {
+  const { enable } = req.body;
+  botEnabled = !!enable;
+  res.json({ status: botEnabled ? "GPT включен" : "GPT отключен" });
+});
+
+// 🟢 Основной GPT-запрос
 app.post('/ask', async (req, res) => {
+  if (!botEnabled) {
+    return res.json({ answer: "❌ Бот сейчас отключен через админ-панель." });
+  }
+
   try {
     const { prompt } = req.body;
     const response = await openai.chat.completions.create({
@@ -32,3 +46,4 @@ app.post('/ask', async (req, res) => {
 app.listen(port, () => {
   console.log(`✅ Сервер запущен: http://localhost:${port}`);
 });
+
